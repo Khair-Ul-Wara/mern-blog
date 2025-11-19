@@ -1,17 +1,8 @@
 import mongoose from "mongoose";
 
-const PostSchema = new mongoose.Schema(
+const CommentSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    desc: {
-      type: String,
-      required: true,
-    },
-    username: {
+    postId: {
       type: String,
       required: true,
     },
@@ -19,12 +10,17 @@ const PostSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    image: {
+    username: {
       type: String,
-      default: "",
+      required: true,
+    },
+    text: {
+      type: String,
+      required: true,
+      trim: true,
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Post", PostSchema);
+export default mongoose.model("Comment", CommentSchema);

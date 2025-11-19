@@ -1,67 +1,108 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import API from "../api/axios";
 import "../styles/Write.css";
 
 const Write = () => {
-  const [post, setPost] = useState({
-    title: "",
-    content: "",
-    image: null,
-  });
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+  const [file, setFile] = useState(null);
 
-  const handleChange = (e) => {
-    setPost({ ...post, [e.target.name]: e.target.value });
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    setPost({ ...post, image: file ? URL.createObjectURL(file) : null });
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Post submitted:", post);
+
+    // Get user from localStorage
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const token = storedUser?.token;
+
+    if (!token) {
+      alert("You must be logged in to create a post");
+      return;
+    }
+
+    let imageName = "";
+
+    // Upload image if selected
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const uploadRes = await API.post("/upload", formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        imageName = uploadRes.data.filename;
+      } catch (err) {
+        console.error("Error uploading image:", err);
+        alert("Image upload failed");
+        return;
+      }
+    }
+
+    // Create post
+    try {
+      await API.post(
+        "/posts/create",
+        {
+          title,
+          desc,
+          image: imageName,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      alert("Post created successfully!");
+      setTitle("");
+      setDesc("");
+      setFile(null);
+    } catch (err) {
+      console.error("Post creation error:", err);
+      alert("Failed to create post");
+    }
   };
 
   return (
     <div className="write-container">
       <div className="write-card">
-        <h2>Write a New Blog</h2>
+        <h2>Create New Post</h2>
+
+        {/* Image Preview */}
+        {file && (
+          <div className="image-preview">
+            <img src={URL.createObjectURL(file)} alt="preview" />
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
-          {post.image && (
-            <div className="image-preview">
-              <img src={post.image} alt="Preview" />
-            </div>
-          )}
-
+          {/* File Input */}
           <label htmlFor="fileInput" className="file-label">
-            Upload Cover Image
+            Upload Image
           </label>
           <input
             type="file"
             id="fileInput"
-            accept="image/*"
-            onChange={handleImageChange}
+            onChange={(e) => setFile(e.target.files[0])}
           />
 
+          {/* Title Input */}
           <input
             type="text"
-            name="title"
-            placeholder="Enter blog title"
-            value={post.title}
-            onChange={handleChange}
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             required
           />
 
+          {/* Description Textarea */}
           <textarea
-            name="content"
-            placeholder="Write your content..."
-            value={post.content}
-            onChange={handleChange}
-            rows="10"
+            placeholder="Write your post..."
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
             required
-          ></textarea>
+          />
 
+          {/* Submit Button */}
           <button type="submit" className="btn">
             Publish
           </button>

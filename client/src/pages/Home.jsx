@@ -1,40 +1,43 @@
-import React from "react";
+import { useState, useEffect } from "react";
+import API from "../api/axios";
 import "../styles/Home.css";
 
 const Home = () => {
-  const blogs = [
-    {
-      id: 1,
-      title: "The Art of Slow Living",
-      author: "Khairulwara",
-      date: "Oct 18, 2025",
-      excerpt: "Finding beauty in simplicity and stillness..."
-    },
-    {
-      id: 2,
-      title: "Why Aesthetic Code Matters",
-      author: "Khairulwara",
-      date: "Oct 19, 2025",
-      excerpt: "Designing code that feels as beautiful as it looks."
-    }
-  ];
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const res = await API.get("/posts");
+        setPosts(res.data);
+      } catch (err) {
+        console.error("Error fetching posts:", err);
+      }
+    };
+    fetchPosts();
+  }, []);
 
   return (
-    <main className="home-container">
-      <h2>Latest Blogs</h2>
+    <div className="home-container">
       <div className="blog-grid">
-        {blogs.map((blog) => (
-          <div key={blog.id} className="blog-card">
-            <h3>{blog.title}</h3>
+        {posts.map((post) => (
+          <div key={post._id} className="blog-card">
+            <h3>{post.title}</h3>
             <p className="meta">
-              By <span>{blog.author}</span> — {blog.date}
+              by {post.username} | {new Date(post.createdAt).toLocaleDateString()}
             </p>
-            <p className="excerpt">{blog.excerpt}</p>
-            <button className="btn">Read More</button>
+            {post.image && (
+              <img
+                src={`http://localhost:5000/uploads/${post.image}`}
+                alt={post.title}
+                style={{ width: "100%", borderRadius: "12px", marginBottom: "15px" }}
+              />
+            )}
+            <p className="excerpt">{post.desc}</p>
           </div>
         ))}
       </div>
-    </main>
+    </div>
   );
 };
 
